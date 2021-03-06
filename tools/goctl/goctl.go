@@ -23,12 +23,18 @@ import (
 	"github.com/tal-tech/go-zero/tools/goctl/plugin"
 	rpc "github.com/tal-tech/go-zero/tools/goctl/rpc/cli"
 	"github.com/tal-tech/go-zero/tools/goctl/tpl"
+	"github.com/tal-tech/go-zero/tools/goctl/upgrade"
 	"github.com/urfave/cli"
 )
 
 var (
-	BuildVersion = "20201125"
+	buildVersion = "1.1.5"
 	commands     = []cli.Command{
+		{
+			Name:   "upgrade",
+			Usage:  "upgrade goctl to latest version",
+			Action: upgrade.Upgrade,
+		},
 		{
 			Name:  "api",
 			Usage: "generate api related files",
@@ -43,7 +49,7 @@ var (
 				{
 					Name:   "new",
 					Usage:  "fast create api service",
-					Action: new.NewService,
+					Action: new.CreateServiceCommand,
 				},
 				{
 					Name:  "format",
@@ -54,14 +60,12 @@ var (
 							Usage: "the format target dir",
 						},
 						cli.BoolFlag{
-							Name:     "iu",
-							Usage:    "ignore update",
-							Required: false,
+							Name:  "iu",
+							Usage: "ignore update",
 						},
 						cli.BoolFlag{
-							Name:     "stdin",
-							Usage:    "use stdin to input api doc content, press \"ctrl + d\" to send EOF",
-							Required: false,
+							Name:  "stdin",
+							Usage: "use stdin to input api doc content, press \"ctrl + d\" to send EOF",
 						},
 					},
 					Action: format.GoFormatApi,
@@ -85,6 +89,11 @@ var (
 							Name:  "dir",
 							Usage: "the target dir",
 						},
+						cli.StringFlag{
+							Name:     "o",
+							Required: false,
+							Usage:    "the output markdown directory",
+						},
 					},
 					Action: docgen.DocCommand,
 				},
@@ -101,9 +110,8 @@ var (
 							Usage: "the api file",
 						},
 						cli.StringFlag{
-							Name:     "style",
-							Required: false,
-							Usage:    "the file naming format, see [https://github.com/tal-tech/go-zero/tree/master/tools/goctl/config/readme.md]",
+							Name:  "style",
+							Usage: "the file naming format, see [https://github.com/tal-tech/go-zero/tree/master/tools/goctl/config/readme.md]",
 						},
 					},
 					Action: gogen.GoCommand,
@@ -136,19 +144,16 @@ var (
 							Usage: "the api file",
 						},
 						cli.StringFlag{
-							Name:     "webapi",
-							Usage:    "the web api file path",
-							Required: false,
+							Name:  "webapi",
+							Usage: "the web api file path",
 						},
 						cli.StringFlag{
-							Name:     "caller",
-							Usage:    "the web api caller",
-							Required: false,
+							Name:  "caller",
+							Usage: "the web api caller",
 						},
 						cli.BoolFlag{
-							Name:     "unwrap",
-							Usage:    "unwrap the webapi caller for import",
-							Required: false,
+							Name:  "unwrap",
+							Usage: "unwrap the webapi caller for import",
 						},
 					},
 					Action: tsgen.TsCommand,
@@ -204,9 +209,8 @@ var (
 							Usage: "the api file",
 						},
 						cli.StringFlag{
-							Name:     "style",
-							Required: false,
-							Usage:    "the file naming format, see [https://github.com/tal-tech/go-zero/tree/master/tools/goctl/config/readme.md]",
+							Name:  "style",
+							Usage: "the file naming format, see [https://github.com/tal-tech/go-zero/tree/master/tools/goctl/config/readme.md]",
 						},
 					},
 					Action: plugin.PluginCommand,
@@ -220,6 +224,11 @@ var (
 				cli.StringFlag{
 					Name:  "go",
 					Usage: "the file that contains main function",
+				},
+				cli.IntFlag{
+					Name:  "port",
+					Usage: "the port to expose, default none",
+					Value: 0,
 				},
 			},
 			Action: docker.DockerCommand,
@@ -248,9 +257,8 @@ var (
 							Required: true,
 						},
 						cli.StringFlag{
-							Name:     "secret",
-							Usage:    "the image pull secret",
-							Required: true,
+							Name:  "secret",
+							Usage: "the secret to image pull from registry",
 						},
 						cli.IntFlag{
 							Name:  "requestCpu",
@@ -321,16 +329,15 @@ var (
 					Usage: `generate rpc demo service`,
 					Flags: []cli.Flag{
 						cli.StringFlag{
-							Name:     "style",
-							Required: false,
-							Usage:    "the file naming format, see [https://github.com/tal-tech/go-zero/tree/master/tools/goctl/config/readme.md]",
+							Name:  "style",
+							Usage: "the file naming format, see [https://github.com/tal-tech/go-zero/tree/master/tools/goctl/config/readme.md]",
 						},
 						cli.BoolFlag{
 							Name:  "idea",
 							Usage: "whether the command execution environment is from idea plugin. [optional]",
 						},
 					},
-					Action: rpc.RpcNew,
+					Action: rpc.RPCNew,
 				},
 				{
 					Name:  "template",
@@ -341,7 +348,7 @@ var (
 							Usage: "the target path of proto",
 						},
 					},
-					Action: rpc.RpcTemplate,
+					Action: rpc.RPCTemplate,
 				},
 				{
 					Name:  "proto",
@@ -360,16 +367,15 @@ var (
 							Usage: `the target path of the code`,
 						},
 						cli.StringFlag{
-							Name:     "style",
-							Required: false,
-							Usage:    "the file naming format, see [https://github.com/tal-tech/go-zero/tree/master/tools/goctl/config/readme.md]",
+							Name:  "style",
+							Usage: "the file naming format, see [https://github.com/tal-tech/go-zero/tree/master/tools/goctl/config/readme.md]",
 						},
 						cli.BoolFlag{
 							Name:  "idea",
 							Usage: "whether the command execution environment is from idea plugin. [optional]",
 						},
 					},
-					Action: rpc.Rpc,
+					Action: rpc.RPC,
 				},
 			},
 		},
@@ -394,9 +400,8 @@ var (
 									Usage: "the target dir",
 								},
 								cli.StringFlag{
-									Name:     "style",
-									Required: false,
-									Usage:    "the file naming format, see [https://github.com/tal-tech/go-zero/tree/master/tools/goctl/config/readme.md]",
+									Name:  "style",
+									Usage: "the file naming format, see [https://github.com/tal-tech/go-zero/tree/master/tools/goctl/config/readme.md]",
 								},
 								cli.BoolFlag{
 									Name:  "cache, c",
@@ -430,9 +435,8 @@ var (
 									Usage: "the target dir",
 								},
 								cli.StringFlag{
-									Name:     "style",
-									Required: false,
-									Usage:    "the file naming format, see [https://github.com/tal-tech/go-zero/tree/master/tools/goctl/config/readme.md]",
+									Name:  "style",
+									Usage: "the file naming format, see [https://github.com/tal-tech/go-zero/tree/master/tools/goctl/config/readme.md]",
 								},
 								cli.BoolFlag{
 									Name:  "idea",
@@ -476,7 +480,7 @@ var (
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "category,c",
-							Usage: "the category of template, enum [api,rpc,model]",
+							Usage: "the category of template, enum [api,rpc,model,docker,kube]",
 						},
 					},
 					Action: tpl.UpdateTemplates,
@@ -487,7 +491,7 @@ var (
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "category,c",
-							Usage: "the category of template, enum [api,rpc,model]",
+							Usage: "the category of template, enum [api,rpc,model,docker,kube]",
 						},
 						cli.StringFlag{
 							Name:  "name,n",
@@ -506,7 +510,7 @@ func main() {
 
 	app := cli.NewApp()
 	app.Usage = "a cli tool to generate code"
-	app.Version = fmt.Sprintf("%s %s/%s", BuildVersion, runtime.GOOS, runtime.GOARCH)
+	app.Version = fmt.Sprintf("%s %s/%s", buildVersion, runtime.GOOS, runtime.GOARCH)
 	app.Commands = commands
 	// cli already print error messages
 	if err := app.Run(os.Args); err != nil {

@@ -4,6 +4,7 @@ import (
 	"go/build"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,7 +27,7 @@ func TestRpcGenerate(t *testing.T) {
 		return
 	}
 	projectName := stringx.Rand()
-	g := NewRpcGenerator(dispatcher, cfg)
+	g := NewRPCGenerator(dispatcher, cfg)
 
 	// case go path
 	src := filepath.Join(build.Default.GOPATH, "src")
@@ -44,7 +45,9 @@ func TestRpcGenerate(t *testing.T) {
 	assert.Nil(t, err)
 	_, err = execx.Run("go test "+projectName, projectDir)
 	if err != nil {
-		assert.Contains(t, err.Error(), "not in GOROOT")
+		assert.True(t, func() bool {
+			return strings.Contains(err.Error(), "not in GOROOT") || strings.Contains(err.Error(), "cannot find package")
+		}())
 	}
 
 	// case go mod
@@ -61,7 +64,9 @@ func TestRpcGenerate(t *testing.T) {
 	assert.Nil(t, err)
 	_, err = execx.Run("go test "+projectName, projectDir)
 	if err != nil {
-		assert.Contains(t, err.Error(), "not in GOROOT")
+		assert.True(t, func() bool {
+			return strings.Contains(err.Error(), "not in GOROOT") || strings.Contains(err.Error(), "cannot find package")
+		}())
 	}
 
 	// case not in go mod and go path
@@ -69,11 +74,8 @@ func TestRpcGenerate(t *testing.T) {
 	assert.Nil(t, err)
 	_, err = execx.Run("go test "+projectName, projectDir)
 	if err != nil {
-		assert.Contains(t, err.Error(), "not in GOROOT")
+		assert.True(t, func() bool {
+			return strings.Contains(err.Error(), "not in GOROOT") || strings.Contains(err.Error(), "cannot find package")
+		}())
 	}
-
-	// invalid directory
-	projectDir = filepath.Join(t.TempDir(), ".....")
-	err = g.Generate("./test.proto", projectDir, nil)
-	assert.NotNil(t, err)
 }
